@@ -1,0 +1,3 @@
+[submodule "Assets/EdenUnityUtilities"]
+	path = Assets/EdenUnityUtilities
+	url = git@github.com:EdenIreland/EdenUnityUtilities.git
