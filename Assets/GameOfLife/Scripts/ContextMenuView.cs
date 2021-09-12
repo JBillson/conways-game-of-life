@@ -1,59 +1,49 @@
 ﻿using Lean.Gui;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace GameOfLife.Scripts
 {
     public class ContextMenuView : MonoBehaviour
     {
-        [Header("Main Menu")] public LeanWindow mainMenuWindow;
-        public LeanButton createMenuButton;
-        public LeanButton clearBoardButton;
+        [Header("Control Section")] public Button startButton;
+        public Button stopButton;
+        public Button clearButton;
+        public Button randomFillButton;
+        public Button stepButton;
+        public Slider speedSlider;
+        public TextMeshProUGUI speedText;
 
-        [Header("Create Menu")] public LeanWindow createMenuWindow;
-        public LeanButton gosperGliderGunButton;
-        public LeanButton gosperGliderEater;
+        [Header("Load/Save Section")] public Button loadButton;
+        public Button saveButton;
 
-        [Header("Other")] public LeanButton hideContextMenuButton;
-        public LeanButton backButton;
+        [Header("Other")] public Button hideContextMenuButton;
 
         private ContextMenuController _contextMenuController;
-        private GameManager _gameManager;
-        private ShapeCreator _shapeCreator;
 
         private void Awake()
         {
             _contextMenuController = FindObjectOfType<ContextMenuController>();
-            _gameManager = FindObjectOfType<GameManager>();
-            _shapeCreator = FindObjectOfType<ShapeCreator>();
         }
 
         private void Start()
         {
-            // Main Menu
-            createMenuButton.OnClick.AddListener(ShowCreateMenu);
-            clearBoardButton.OnClick.AddListener(() => _gameManager.ClearBoard());
+            startButton.onClick.AddListener(() => _contextMenuController.Play());
+            stopButton.onClick.AddListener(_contextMenuController.Stop);
+            clearButton.onClick.AddListener(_contextMenuController.Clear);
+            randomFillButton.onClick.AddListener(_contextMenuController.RandomFill);
+            stepButton.onClick.AddListener(_contextMenuController.Step);
+            speedSlider.onValueChanged.AddListener(value =>
+            {
+                var speed = (int) value;
+                speedText.text = speed.ToString();
+                _contextMenuController.UpdateSpeed(speed);
+            });
 
-            // Create Menu
-            gosperGliderGunButton.OnClick.AddListener(() =>
-                _shapeCreator.CreateShape(ShapeCreator.Shape.GosperGliderGun));
-            gosperGliderEater.OnClick.AddListener(() =>
-                _shapeCreator.CreateShape(ShapeCreator.Shape.GosperGliderEater));
 
-            // Other
-            hideContextMenuButton.OnClick.AddListener(() => _contextMenuController.HideContextMenu());
-            backButton.OnClick.AddListener(ShowMainMenu);
-
-            ShowMainMenu();
-        }
-
-        private void ShowCreateMenu()
-        {
-            createMenuWindow.On = true;
-        }
-
-        private void ShowMainMenu()
-        {
-            mainMenuWindow.On = true;
+            saveButton.onClick.AddListener(_contextMenuController.Save);
+            loadButton.onClick.AddListener(_contextMenuController.Load);
         }
     }
 }

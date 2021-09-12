@@ -7,6 +7,12 @@ namespace GameOfLife.Scripts
 {
     public class GameManager : MonoBehaviour
     {
+        #region PROPERTIES
+
+        public Cell[,] Grid { get; set; }
+
+        #endregion
+
         #region PUBLIC VARIABLES
 
         [Range(0, 100)] public int stepsPerSecond = 1;
@@ -20,20 +26,14 @@ namespace GameOfLife.Scripts
         private readonly int _boardWidth = Screen.width / 16;
         private readonly int _boardHeight = Screen.height / 16;
 
-        private Cell[,] _grid;
         private Transform _cellHolder;
         private int _generation;
         private readonly Stopwatch _stopwatch = new Stopwatch();
-        private ContextMenuController _contextMenuController;
+        private bool _isPlaying;
 
         #endregion
 
         #region MONOBEHAVIOUR
-
-        private void Awake()
-        {
-            _contextMenuController = FindObjectOfType<ContextMenuController>();
-        }
 
         private void Start()
         {
@@ -42,18 +42,8 @@ namespace GameOfLife.Scripts
 
         private void Update()
         {
-            if (Input.GetMouseButton(0)) return;
-
-            // Press Enter to Increase Generation
-            if (stepsPerSecond == 0)
-            {
-                if (!Input.GetKeyDown(KeyCode.Return)) return;
-                IncreaseGeneration();
-                return;
-            }
-
             // Increase Generation x times per second
-            if (_stopwatch.ElapsedMilliseconds <= 1 / (float) stepsPerSecond * 1000) return;
+            if (_stopwatch.ElapsedMilliseconds <= 1 / (float) stepsPerSecond * 1000 || !_isPlaying) return;
             IncreaseGeneration();
             _stopwatch.Restart();
         }
@@ -62,54 +52,13 @@ namespace GameOfLife.Scripts
 
         #region PUBLIC METHODS
 
-        public void ClearBoard()
+        public void RandomFill()
         {
-            foreach (var cell in _grid)
-            {
-                cell.SetAlive(false);
-            }
-
-            _contextMenuController.HideContextMenu();
+            foreach (var cell in Grid)
+                cell.SetAlive(Random.Range(0, 100) > 75);
         }
 
-        #endregion
-
-        #region PRIVATE METHODS
-
-        private void SetupGame()
-        {
-            InitCamera();
-            InitCells();
-
-            _stopwatch.Start();
-        }
-
-        private void InitCamera()
-        {
-            var cam = FindObjectOfType<Camera>();
-            var camX = (_boardWidth - 1) / 2;
-            var camY = (_boardHeight - 1) / 2;
-            cam.transform.position = new Vector3(camX + .5f, camY + .5f, -10);
-            cam.orthographicSize = (float) _boardHeight / 2;
-        }
-
-        private void InitCells()
-        {
-            _cellHolder = new GameObject("Cell Holder").transform;
-            _grid = new Cell[_boardWidth, _boardHeight];
-            for (var x = 0; x < _boardWidth; x++)
-            {
-                for (var y = 0; y < _boardHeight; y++)
-                {
-                    var cell = Instantiate(cellPrefab, new Vector2(x, y), Quaternion.identity, _cellHolder);
-                    cell.name = $"[{x},{y}]";
-                    _grid[x, y] = cell;
-                    _grid[x, y].SetAlive(Random.Range(0, 100) > 75);
-                }
-            }
-        }
-
-        private void IncreaseGeneration()
+        public void IncreaseGeneration()
         {
             _generation++;
             generationText.text = $"Generation: {_generation}";
@@ -124,16 +73,71 @@ namespace GameOfLife.Scripts
                 {
                     var neighbours = GetLiveNeighbours(x, y);
 
-                    if (_grid[x, y].IsAlive)
+                    if (Grid[x, y].IsAlive)
                     {
                         if (neighbours != 2 && neighbours != 3)
-                            _grid[x, y].SetAlive(false);
+                            Grid[x, y].SetAlive(false);
                     }
                     else
                     {
                         if (neighbours == 3)
-                            _grid[x, y].SetAlive(true);
+                            Grid[x, y].SetAlive(true);
                     }
+                }
+            }
+        }
+
+        public void ClearBoard()
+        {
+            foreach (var cell in Grid)
+                cell.SetAlive(false);
+        }
+
+        public void Play(int speed)
+        {
+            _isPlaying = true;
+            stepsPerSecond = speed;
+        }
+
+        public void Stop()
+        {
+            _isPlaying = false;
+            stepsPerSecond = 0;
+        }
+
+        #endregion
+
+        #region PRIVATE METHODS
+
+        private void SetupGame()
+        {
+            InitCamera();
+            InitBoard();
+
+            _stopwatch.Start();
+        }
+
+        private void InitCamera()
+        {
+            var cam = FindObjectOfType<Camera>();
+            var camX = (_boardWidth - 1) / 2;
+            var camY = (_boardHeight - 1) / 2;
+            cam.transform.position = new Vector3(camX + .5f, camY + .5f, -10);
+            cam.orthographicSize = (float) _boardHeight / 2;
+        }
+
+        private void InitBoard()
+        {
+            _cellHolder = new GameObject("Cell Holder").transform;
+            Grid = new Cell[_boardWidth, _boardHeight];
+            for (var x = 0; x < _boardWidth; x++)
+            {
+                for (var y = 0; y < _boardHeight; y++)
+                {
+                    var cell = Instantiate(cellPrefab, new Vector2(x, y), Quaternion.identity, _cellHolder);
+                    cell.name = $"[{x},{y}]";
+                    Grid[x, y] = cell;
+                    cell.SetAlive(false);
                 }
             }
         }
@@ -144,56 +148,56 @@ namespace GameOfLife.Scripts
             // North
             if (y + 1 < _boardHeight)
             {
-                if (_grid[x, y + 1].IsAlive)
+                if (Grid[x, y + 1].IsAlive)
                     neighbours++;
             }
 
             // North East
             if (y + 1 < _boardHeight && x + 1 < _boardWidth)
             {
-                if (_grid[x + 1, y + 1].IsAlive)
+                if (Grid[x + 1, y + 1].IsAlive)
                     neighbours++;
             }
 
             // East
             if (x + 1 < _boardWidth)
             {
-                if (_grid[x + 1, y].IsAlive)
+                if (Grid[x + 1, y].IsAlive)
                     neighbours++;
             }
 
             // South East
             if (x + 1 < _boardWidth && y - 1 >= 0)
             {
-                if (_grid[x + 1, y - 1].IsAlive)
+                if (Grid[x + 1, y - 1].IsAlive)
                     neighbours++;
             }
 
             // South
             if (y - 1 >= 0)
             {
-                if (_grid[x, y - 1].IsAlive)
+                if (Grid[x, y - 1].IsAlive)
                     neighbours++;
             }
 
             // South West
             if (x - 1 >= 0 && y - 1 >= 0)
             {
-                if (_grid[x - 1, y - 1].IsAlive)
+                if (Grid[x - 1, y - 1].IsAlive)
                     neighbours++;
             }
 
             // West
             if (x - 1 >= 0)
             {
-                if (_grid[x - 1, y].IsAlive)
+                if (Grid[x - 1, y].IsAlive)
                     neighbours++;
             }
 
             // North West
             if (y + 1 < _boardHeight && x - 1 >= 0)
             {
-                if (_grid[x - 1, y + 1].IsAlive)
+                if (Grid[x - 1, y + 1].IsAlive)
                     neighbours++;
             }
 
