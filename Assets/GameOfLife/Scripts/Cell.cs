@@ -35,8 +35,10 @@ namespace GameOfLife.Scripts
         {
             if (Input.GetMouseButtonDown(0))
                 LeftClick();
+            if (Input.GetMouseButtonDown(1))
+                RightClick();
 
-            _canDrag = Input.GetMouseButton(0);
+            _canDrag = Input.GetMouseButton(0) || Input.GetMouseButton(1);
         }
 
         private void LeftClick()
@@ -44,13 +46,25 @@ namespace GameOfLife.Scripts
             var ray = _camera.ScreenPointToRay(Input.mousePosition);
             if (!Physics.Raycast(ray, out var hit)) return;
             if (hit.transform.parent.gameObject != gameObject) return;
-            SetAlive(!IsAlive);
+            SetAlive(true);
+        }
+
+        private void RightClick()
+        {
+            var ray = _camera.ScreenPointToRay(Input.mousePosition);
+            if (!Physics.Raycast(ray, out var hit)) return;
+            if (hit.transform.parent.gameObject != gameObject) return;
+            SetAlive(false);
         }
 
         private void OnPointerEnter()
         {
             if (!_canDrag) return;
-            SetAlive(!IsAlive);
+            if (Input.GetMouseButton(0))
+                SetAlive(true);
+
+            if (Input.GetMouseButton(1))
+                SetAlive(false);
         }
 
         public void SetAlive(bool alive)
