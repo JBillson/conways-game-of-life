@@ -15,7 +15,11 @@ namespace GameOfLife.Scripts
 
         #region PUBLIC VARIABLES
 
+        [Header("Settings")] public float scrollSpeed = 1;
+        public float panSpeed = 2f;
         [Range(0, 100)] public int stepsPerSecond = 1;
+        
+        [Header("References")]
         public TextMeshProUGUI generationText;
         public Cell cellPrefab;
 
@@ -23,13 +27,14 @@ namespace GameOfLife.Scripts
 
         #region PRIVATE VARIABLES
 
-        private readonly int _boardWidth = Screen.width / 16;
-        private readonly int _boardHeight = Screen.height / 16;
+        private readonly int _boardWidth = 100;
+        private readonly int _boardHeight = 100;
 
         private Transform _cellHolder;
         private int _generation;
         private readonly Stopwatch _stopwatch = new Stopwatch();
         private bool _isPlaying;
+        private Camera _camera;
 
         #endregion
 
@@ -37,15 +42,34 @@ namespace GameOfLife.Scripts
 
         private void Start()
         {
+            _camera = Camera.main;
             SetupGame();
         }
 
         private void Update()
         {
             // Increase Generation x times per second
-            if (_stopwatch.ElapsedMilliseconds <= 1 / (float) stepsPerSecond * 1000 || !_isPlaying) return;
-            IncreaseGeneration();
-            _stopwatch.Restart();
+            if (_stopwatch.ElapsedMilliseconds > 1 / (float) stepsPerSecond * 1000 && _isPlaying)
+            {
+                IncreaseGeneration();
+                _stopwatch.Restart();
+            }
+
+            if (Input.mouseScrollDelta.y != 0)
+            {
+                _camera.orthographicSize -= Input.mouseScrollDelta.y * scrollSpeed;
+            }
+
+            if (Input.GetMouseButton(2))
+            {
+                var mouseX = Input.GetAxis("Mouse X");
+                var mouseY = Input.GetAxis("Mouse Y");
+                var cameraTransform = _camera.transform;
+                var cameraPos = cameraTransform.position;
+                cameraPos -= cameraTransform.right * mouseX * panSpeed;
+                cameraPos -= cameraTransform.up * mouseY * panSpeed;
+                cameraTransform.position = cameraPos;
+            }
         }
 
         #endregion
@@ -119,11 +143,10 @@ namespace GameOfLife.Scripts
 
         private void InitCamera()
         {
-            var cam = FindObjectOfType<Camera>();
-            var camX = (_boardWidth - 1) / 2;
-            var camY = (_boardHeight - 1) / 2;
-            cam.transform.position = new Vector3(camX + .5f, camY + .5f, -10);
-            cam.orthographicSize = (float) _boardHeight / 2;
+            var camX = _boardWidth * 0.5f;
+            var camY = _boardHeight * 0.5f + _boardHeight * 0.05f;
+            _camera.transform.position = new Vector3(camX, camY, -10);
+            _camera.orthographicSize = _boardHeight * 0.5f - _boardHeight * 0.05f;
         }
 
         private void InitBoard()
