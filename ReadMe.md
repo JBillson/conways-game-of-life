@@ -2,4 +2,4 @@
 
 Investigating Cellular Automaton with Conway's Game of Life
 
-![gosper-glider-gun](https://github.com/JBillson/conways-game-of-life/readme/gosper-glider-gun.gif)
+![gosper-glider-gun](https://github.com/JBillson/conways-game-of-life/blob/27e221e1f12e0bfc5c625a70570eb6b42c99f9b4/readme/gosper-glider-gun.gif)
